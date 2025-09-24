@@ -19,13 +19,13 @@ type Config struct {
 
 	// Authentication configuration
 	JWTSecret      string
-	BaseURL        string
+	APIBaseURL     string //base url for the api
 	AvatarPath     string
 	TokenDuration  int // in minutes
 	CookieDuration int // in hours
 }
 
-func LoadConfig() (*Config, error) {
+func LoadConfig() *Config {
 	config := &Config{
 		// Database configuration
 		Dsn: getRequiredEnv("DB_DSN"),
@@ -39,12 +39,12 @@ func LoadConfig() (*Config, error) {
 
 		// Authentication configuration
 		JWTSecret:      getRequiredEnv("JWT_SECRET"),
-		BaseURL:        getEnvOrDefault("BASE_URL", "http://localhost:8080"),
+		APIBaseURL:     getEnvOrDefault("API_BASE_URL", "http://localhost:8080/api"),
 		AvatarPath:     getEnvOrDefault("AVATAR_PATH", "./data/avatars"),
 		TokenDuration:  getEnvIntOrDefault("TOKEN_DURATION", 60),  // default 60 minutes
 		CookieDuration: getEnvIntOrDefault("COOKIE_DURATION", 24), // default 24 hours
 	}
-	return config, nil
+	return config
 }
 
 // getRequiredEnv gets an environment variable and panics if it's not set
