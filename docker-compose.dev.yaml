@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-openwaitlist}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openwaitlist}
+      POSTGRES_DB: ${POSTGRES_DB:-openwaitlist}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-openwaitlist} -d ${POSTGRES_DB:-openwaitlist}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env.example
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data/avatars:/app/data/avatars
+
+    
+volumes:
+  postgres_data: {}
