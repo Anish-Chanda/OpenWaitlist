@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/anish-chanda/openwaitlist/backend/internal/db"
 	postgres "github.com/anish-chanda/openwaitlist/backend/internal/db/postgresql"
 	"github.com/anish-chanda/openwaitlist/backend/internal/handlers"
 	"github.com/anish-chanda/openwaitlist/backend/internal/logger"
+	"github.com/anish-chanda/openwaitlist/web"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	authpkg "github.com/go-pkgz/auth/v2"
@@ -73,15 +75,45 @@ func main() {
 
 	router.Use(middleware.Logger)
 
-	// auth routes
-	router.Route("/", func(r chi.Router) {
-		r.Post("/signup", handlers.SignupHandler(database, *log))
-	})
+	// API routes
+	router.Post("/signup", handlers.SignupHandler(database, *log))
+
+	// Auth and avatar handlers
 	authHandler, avatarHandler := authService.Handlers()
 	router.Mount("/auth", authHandler)
 	router.Mount("/avatar", avatarHandler)
 
-	// Start listening
+	// create file server to serve static frontend files
+	fileServer := http.FileServer(http.FS(web.DistDirFS))
+
+	// Wrapper to handle SPA routing - serves index.html for non-asset requests
+	spaHandler := func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/")
+
+		// Check if it's a static asset (has file extension)
+		if strings.Contains(path, ".") {
+			// It's a file, serve it directly
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// It's a route, serve index.html for SPA routing
+		r.URL.Path = "/"
+		fileServer.ServeHTTP(w, r)
+	}
+
+	// Handle static files for specific routes
+	router.Get("/login", spaHandler)
+	router.Get("/signup", spaHandler)
+	router.Get("/dashboard", spaHandler)
+
+	// Handle static assets (CSS, JS, etc.)
+	router.Get("/chunk-*", func(w http.ResponseWriter, r *http.Request) {
+		fileServer.ServeHTTP(w, r)
+	})
+
+	// Root path redirects to login (handled by React Router, but serve the app)
+	router.Get("/", spaHandler) // Start listening
 	log.Info(fmt.Sprintf("Starting server on port %d", cfg.ApiPort))
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.ApiPort), router); err != nil {
 		log.Error("Server failed to start", err)
