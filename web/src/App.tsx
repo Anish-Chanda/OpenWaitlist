@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PublicRoute } from '@/components/PublicRoute';
 import { LoginPage } from '@/pages/LoginPage';
@@ -10,8 +11,10 @@ import "./index.css";
 
 export function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <div className="h-full">
+      <ThemeProvider>
+        <Router>
+          <AuthProvider>
         <Routes>
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -47,8 +50,10 @@ export function App() {
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </AuthProvider>
-    </Router>
+        </AuthProvider>
+      </Router>
+    </ThemeProvider>
+    </div>
   );
 }
 
