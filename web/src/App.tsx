@@ -7,6 +7,7 @@ import { PublicRoute } from '@/components/PublicRoute';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { WaitlistManagementPage } from '@/pages/WaitlistManagementPage';
 import "./index.css";
 
 export function App() {
@@ -43,6 +44,14 @@ export function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/waitlists/:slug"
+            element={
+              <ProtectedRoute>
+                <WaitlistManagementPage />
               </ProtectedRoute>
             }
           />

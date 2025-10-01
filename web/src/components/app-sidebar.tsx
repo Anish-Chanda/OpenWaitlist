@@ -40,21 +40,6 @@ const navMainItems = [
     ],
   },
   {
-    title: "Signups",
-    url: "/dashboard/signups",
-    icon: Users,
-    items: [
-      {
-        title: "All Signups",
-        url: "/dashboard/signups",
-      },
-      {
-        title: "Recent",
-        url: "/dashboard/signups/recent",
-      },
-    ],
-  },
-  {
     title: "Settings",
     url: "/dashboard/settings",
     icon: Settings2,
@@ -65,15 +50,15 @@ const navMainItems = [
       },
       {
         title: "Email",
-        url: "/dashboard/settings/email",
+        url: "/dashboard/settings#email",
       },
       {
         title: "API keys",
-        url: "/dashboard/settings/api-keys",
+        url: "/dashboard/settings#api-keys",
       },
       {
         title: "Import/Export",
-        url: "/dashboard/settings/export",
+        url: "/dashboard/settings#export",
       },
     ],
   },

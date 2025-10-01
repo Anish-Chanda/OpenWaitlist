@@ -15,12 +15,12 @@ type User struct {
 }
 
 type Waitlist struct {
-	ID                 int64      `db:"id"`
-	Slug               string     `db:"slug"` // This is a Varchar(6), our app would generate a 6 Char alphanumeric string
-	Name               string     `db:"name"`
-	OwnerUserID        int64      `db:"owner_user_id"` //This is the foreign key to User.ID
-	IsPublic           bool       `db:"is_public"`
-	ShowVendorBranding bool       `db:"show_vendor_branding"` //if set to false, we hide badges/mentions of open-waitlist
-	CreatedAt          time.Time  `db:"created_at"`
-	ArchivedAt         *time.Time `db:"archived_at"`
+	ID                 int64     `json:"id" db:"id"`
+	Slug               string    `json:"slug" db:"slug"`
+	Name               string    `json:"name" db:"name"`
+	OwnerUserID        int64     `json:"owner_user_id" db:"owner_user_id"`
+	IsPublic           bool      `json:"is_public" db:"is_public"`
+	ShowVendorBranding bool      `json:"show_vendor_branding" db:"show_vendor_branding"`
+	CreatedAt          time.Time `json:"created_at" db:"created_at"`
+	ArchivedAt         *time.Time `json:"archived_at,omitempty" db:"archived_at"`
 }

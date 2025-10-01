@@ -16,7 +16,7 @@ CREATE TABLE users (
 
 CREATE TABLE waitlists (
   id                     SERIAL PRIMARY KEY,
-  slug                   VARCHAR(6) UNIQUE NOT NULL,
+  slug                   TEXT UNIQUE NOT NULL,
   name                   TEXT NOT NULL,
   owner_user_id          INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   is_public              BOOLEAN NOT NULL DEFAULT TRUE,

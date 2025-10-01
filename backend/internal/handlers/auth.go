@@ -117,9 +117,9 @@ func SignupHandler(database db.Database, log logger.ServiceLogger) http.HandlerF
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(response)
-		
+
 		log.Info("User created successfully", map[string]interface{}{
-			"email": req.Email,
+			"email":   req.Email,
 			"user_id": user.ID,
 		})
 	}
@@ -131,7 +131,7 @@ func writeErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 		Success: false,
 		Message: message,
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
