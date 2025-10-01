@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -11,6 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { WaitlistTable } from '@/components/WaitlistTable';
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -26,13 +28,13 @@ export function DashboardPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard">
-                    Dashboard
+                  <BreadcrumbLink asChild>
+                    <Link to="/dashboard">Dashboard</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Overview</BreadcrumbPage>
+                  <BreadcrumbPage>Waitlists</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -40,19 +42,9 @@ export function DashboardPage() {
         </header>
         <main className="flex-1 overflow-auto">
           <div className="h-full px-6 py-6">
-            {/* User Info Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-semibold mb-2">Welcome to OpenWaitlist!</h1>
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                <span><strong>Email:</strong> {user?.email}</span>
-                <span><strong>ID:</strong> {user?.id}</span>
-                <span><strong>Display Name:</strong> {user?.display_name || 'Not set'}</span>
-              </div>
-            </div>
-
             {/* Main Content Area */}
-            <div className="rounded-xl border bg-card text-card-foreground shadow">
-              
+            <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
+              <WaitlistTable />
             </div>
           </div>
         </main>

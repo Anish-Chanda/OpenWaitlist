@@ -75,13 +75,27 @@ func main() {
 
 	router.Use(middleware.Logger)
 
-	// API routes
+	// custom auth routes
 	router.Post("/signup", handlers.SignupHandler(database, *log))
 
 	// Auth and avatar handlers
 	authHandler, avatarHandler := authService.Handlers()
 	router.Mount("/auth", authHandler)
 	router.Mount("/avatar", avatarHandler)
+
+	// API routes
+	router.Route("/api/v1", func(r chi.Router) {
+		// Apply auth middleware to all API routes  
+		authMiddleware := authService.Middleware()
+		r.Use(authMiddleware.Auth)
+		
+		// waitlist handlers
+		r.Get("/waitlists", handlers.GetWaitlistsHandler(database, *log))
+		r.Post("/waitlists", handlers.CreateWaitlistHandler(database, *log))
+		r.Get("/waitlists/{slug}", handlers.GetWaitlistHandler(database, *log))
+		r.Put("/waitlists/{slug}", handlers.UpdateWaitlistHandler(database, *log))
+		r.Delete("/waitlists/{slug}", handlers.DeleteWaitlistHandler(database, *log))
+	})
 
 	// create file server to serve static frontend files
 	fileServer := http.FileServer(http.FS(web.DistDirFS))
@@ -106,6 +120,7 @@ func main() {
 	router.Get("/login", spaHandler)
 	router.Get("/signup", spaHandler)
 	router.Get("/dashboard", spaHandler)
+	router.Get("/dashboard/*", spaHandler)
 
 	// Handle static assets (CSS, JS, etc.)
 	router.Get("/chunk-*", func(w http.ResponseWriter, r *http.Request) {

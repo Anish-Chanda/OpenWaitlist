@@ -101,6 +101,215 @@ func (s *PostgresDB) CreateUser(ctx context.Context, user *models.User) error {
 	return nil
 }
 
+// Waitlist functions
+func (s *PostgresDB) GetWaitlistsByUserID(ctx context.Context, userID int64, searchName string) ([]*models.Waitlist, error) {
+	if s.conn == nil {
+		return nil, fmt.Errorf("database connection is not established")
+	}
+
+	query := `
+		SELECT id, slug, name, owner_user_id, is_public, show_vendor_branding, created_at, archived_at
+		FROM waitlists 
+		WHERE owner_user_id = $1 AND archived_at IS NULL
+	`
+	args := []interface{}{userID}
+
+	// Add search filter if provided
+	if searchName != "" {
+		query += " AND name ILIKE $2"
+		args = append(args, "%"+searchName+"%")
+	}
+
+	query += " ORDER BY created_at DESC"
+
+	rows, err := s.conn.Query(ctx, query, args...)
+	if err != nil {
+		s.log.Error("Error querying waitlists: ", err)
+		return nil, fmt.Errorf("error querying waitlists: %w", err)
+	}
+	defer rows.Close()
+
+	var waitlists []*models.Waitlist
+	for rows.Next() {
+		var waitlist models.Waitlist
+		err := rows.Scan(
+			&waitlist.ID,
+			&waitlist.Slug,
+			&waitlist.Name,
+			&waitlist.OwnerUserID,
+			&waitlist.IsPublic,
+			&waitlist.ShowVendorBranding,
+			&waitlist.CreatedAt,
+			&waitlist.ArchivedAt,
+		)
+		if err != nil {
+			s.log.Error("Error scanning waitlist row: ", err)
+			return nil, fmt.Errorf("error scanning waitlist: %w", err)
+		}
+		waitlists = append(waitlists, &waitlist)
+	}
+
+	if err = rows.Err(); err != nil {
+		s.log.Error("Error iterating waitlist rows: ", err)
+		return nil, fmt.Errorf("error iterating waitlists: %w", err)
+	}
+
+	return waitlists, nil
+}
+
+func (s *PostgresDB) CreateWaitlist(ctx context.Context, waitlist *models.Waitlist) error {
+	if s.conn == nil {
+		return fmt.Errorf("database connection is not established")
+	}
+
+	query := `
+		INSERT INTO waitlists (slug, name, owner_user_id, is_public, show_vendor_branding, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`
+
+	waitlist.CreatedAt = time.Now()
+
+	err := s.conn.QueryRow(ctx, query,
+		waitlist.Slug,
+		waitlist.Name,
+		waitlist.OwnerUserID,
+		waitlist.IsPublic,
+		waitlist.ShowVendorBranding,
+		waitlist.CreatedAt,
+	).Scan(&waitlist.ID)
+
+	if err != nil {
+		s.log.Error("Error creating waitlist: ", err)
+		return fmt.Errorf("error creating waitlist: %w", err)
+	}
+
+	s.log.Debug(fmt.Sprintf("Created waitlist with ID: %d", waitlist.ID))
+	return nil
+}
+
+func (s *PostgresDB) GetWaitlistByID(ctx context.Context, id int64) (*models.Waitlist, error) {
+	if s.conn == nil {
+		return nil, fmt.Errorf("database connection is not established")
+	}
+
+	query := `
+		SELECT id, slug, name, owner_user_id, is_public, show_vendor_branding, created_at, archived_at
+		FROM waitlists 
+		WHERE id = $1 AND archived_at IS NULL
+	`
+
+	row := s.conn.QueryRow(ctx, query, id)
+
+	var waitlist models.Waitlist
+	err := row.Scan(
+		&waitlist.ID,
+		&waitlist.Slug,
+		&waitlist.Name,
+		&waitlist.OwnerUserID,
+		&waitlist.IsPublic,
+		&waitlist.ShowVendorBranding,
+		&waitlist.CreatedAt,
+		&waitlist.ArchivedAt,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("waitlist not found")
+		}
+		s.log.Error("Error getting waitlist by id: ", err)
+		return nil, fmt.Errorf("error getting waitlist: %w", err)
+	}
+
+	return &waitlist, nil
+}
+
+func (s *PostgresDB) GetWaitlistBySlug(ctx context.Context, slug string) (*models.Waitlist, error) {
+	if s.conn == nil {
+		return nil, fmt.Errorf("database connection is not established")
+	}
+
+	query := `
+		SELECT id, slug, name, owner_user_id, is_public, show_vendor_branding, created_at, archived_at
+		FROM waitlists 
+		WHERE slug = $1 AND archived_at IS NULL
+	`
+
+	row := s.conn.QueryRow(ctx, query, slug)
+
+	var waitlist models.Waitlist
+	err := row.Scan(
+		&waitlist.ID,
+		&waitlist.Slug,
+		&waitlist.Name,
+		&waitlist.OwnerUserID,
+		&waitlist.IsPublic,
+		&waitlist.ShowVendorBranding,
+		&waitlist.CreatedAt,
+		&waitlist.ArchivedAt,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("waitlist not found")
+		}
+		s.log.Error("Error getting waitlist by slug: ", err)
+		return nil, fmt.Errorf("error getting waitlist: %w", err)
+	}
+
+	return &waitlist, nil
+}
+
+func (s *PostgresDB) UpdateWaitlist(ctx context.Context, waitlist *models.Waitlist) error {
+	if s.conn == nil {
+		return fmt.Errorf("database connection is not established")
+	}
+
+	query := `
+		UPDATE waitlists 
+		SET slug = $1, name = $2, is_public = $3, show_vendor_branding = $4
+		WHERE id = $5 AND archived_at IS NULL
+	`
+
+	_, err := s.conn.Exec(ctx, query,
+		waitlist.Slug,
+		waitlist.Name,
+		waitlist.IsPublic,
+		waitlist.ShowVendorBranding,
+		waitlist.ID,
+	)
+
+	if err != nil {
+		s.log.Error("Error updating waitlist: ", err)
+		return fmt.Errorf("error updating waitlist: %w", err)
+	}
+
+	s.log.Debug(fmt.Sprintf("Updated waitlist with ID: %d", waitlist.ID))
+	return nil
+}
+
+func (s *PostgresDB) DeleteWaitlist(ctx context.Context, id int64) error {
+	if s.conn == nil {
+		return fmt.Errorf("database connection is not established")
+	}
+
+	// Soft delete by setting archived_at timestamp
+	query := `
+		UPDATE waitlists 
+		SET archived_at = $1
+		WHERE id = $2 AND archived_at IS NULL
+	`
+
+	_, err := s.conn.Exec(ctx, query, time.Now(), id)
+	if err != nil {
+		s.log.Error("Error deleting waitlist: ", err)
+		return fmt.Errorf("error deleting waitlist: %w", err)
+	}
+
+	s.log.Debug(fmt.Sprintf("Deleted waitlist with ID: %d", id))
+	return nil
+}
+
 // Helper functions
 func (s *PostgresDB) Connect(dsn string) error {
 	parsedDSN, err := pgx.ParseConfig(dsn)
