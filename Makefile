@@ -6,6 +6,12 @@ help: ## Show this help message
 	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+install: ## Install dependencies for backend and frontend
+	@echo "Installing backend dependencies..."
+	@go mod tidy
+	@echo "Installing frontend dependencies..."
+	@cd web && bun install
+
 build: ## Build web and api binary
 	@echo "Building web frontend..."
 	@cd web && bun run build
